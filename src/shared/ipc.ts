@@ -45,6 +45,8 @@ export interface Snapshot {
   overlaySeq: number;
   toast: { id: number; text: string } | null;
   arcAvailable: boolean;
+  /** Extensions chargées dans le profil du Space actif. */
+  extensions: { id: string; name: string; icon: string | null; hasPopup: boolean; pinned: boolean }[];
 }
 
 export interface LittleSnapshot {
@@ -91,6 +93,8 @@ export type ChromeCommand =
   | { type: "openHistory"; url: string }
   | { type: "showDownload"; id: string }
   | { type: "importArc" }
+  | { type: "openExtension"; id: string; x: number; y: number }
+  | { type: "pinExtension"; id: string; pinned: boolean }
   | { type: "littleCommand"; command: "back" | "reload" | "promote" | "close" | "copy"; }
   | { type: "littleNavigate"; input: string }
   | { type: "find"; text: string; forward: boolean }

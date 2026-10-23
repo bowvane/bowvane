@@ -12,6 +12,7 @@ import * as S from "../core/store";
 import { hostOf, shouldPeek, toNavigableUrl } from "../core/url";
 import type { ChromeCommand, DownloadEntry, OverlayView, PanelData, Snapshot, TabRuntime } from "../shared/ipc";
 import { applyBoosts, AUTO_PIP_SCRIPT, capturePage, EXIT_PIP_SCRIPT, setAdblock, ZAP_SCRIPT } from "./features";
+import { extensionsFor, importArcExtensions, loadAllExtensions, partitionFor, pinExtension, pinnedFor } from "./extensions";
 import { LittleWindow } from "./little";
 import { arcSidebarPath, debounce, loadState, readJson, writeJson } from "./persist";
 
@@ -212,7 +213,7 @@ export class Bowvane {
   sessionFor(profile: string): Electron.Session {
     let ses = this.sessions.get(profile);
     if (ses) return ses;
-    ses = session.fromPartition(profile === "default" ? "persist:bowvane" : `persist:${profile}`);
+    ses = session.fromPartition(partitionFor(profile));
     ses.setUserAgent(app.userAgentFallback);
     void setAdblock(ses, this.state.settings.adblock, app.getPath("userData"));
     ses.on("will-download", (_e, item) => this.trackDownload(item));
@@ -349,6 +350,16 @@ export class Bowvane {
   }
 
   // ——— diffusion vers l’interface ———
+  /** Épinglées d’abord, dans l’ordre de la barre ; le reste par nom, comme le menu puzzle d’Arc. */
+  private extensionList(): Snapshot["extensions"] {
+    const profile = this.space().profile;
+    const pinned = pinnedFor(profile);
+    const rank = (id: string) => (pinned.includes(id) ? pinned.indexOf(id) : pinned.length);
+    return extensionsFor(profile)
+      .sort((a, b) => rank(a.folder) - rank(b.folder) || a.name.localeCompare(b.name))
+      .map((e) => ({ id: e.id, name: e.name, icon: e.iconData, hasPopup: !!e.popup, pinned: pinned.includes(e.folder) }));
+  }
+
   snapshot(): Snapshot {
     const { spaces, activeSpaceId, items, activeTabBySpace, rules, boosts, settings } = this.state;
     return {
@@ -362,6 +373,7 @@ export class Bowvane {
       overlaySeq: this.overlaySeq,
       toast: this.toast,
       arcAvailable: !!arcSidebarPath(),
+      extensions: this.extensionList(),
     };
   }
 
@@ -759,6 +771,59 @@ export class Bowvane {
     };
   }
 
+  // ——— extensions ———
+  private extPopup: WebContentsView | null = null;
+
+  /** Ouvre la popup du bouton d’action sous l’icône cliquée, comme le fait Chrome. */
+  openExtensionPopup(id: string, x: number, y: number): void {
+    this.closeExtensionPopup();
+    const profile = this.space().profile;
+    const ext = extensionsFor(profile).find((e) => e.id === id);
+    if (!ext) return;
+    if (!ext.popup) return this.notify(`${ext.name} n’a pas de fenêtre à ouvrir`);
+    const view = new WebContentsView({ webPreferences: { session: this.sessionFor(profile), sandbox: true, contextIsolation: true } });
+    view.setBackgroundColor("#ffffff");
+    view.setBorderRadius(10);
+    const { width, height } = this.win.getContentBounds();
+    const place = (w: number, h: number) => {
+      const bw = Math.min(w, width - 16), bh = Math.min(h, height - y - 8);
+      view.setBounds({ x: Math.max(8, Math.min(x, width - bw - 8)), y, width: bw, height: Math.max(80, bh) });
+    };
+    place(360, 480);
+    this.win.contentView.addChildView(view);
+    this.extPopup = view;
+    const wc = view.webContents;
+    wc.setWindowOpenHandler(({ url }) => {
+      this.openInSpace(this.state.activeSpaceId, url);
+      this.closeExtensionPopup();
+      return { action: "deny" };
+    });
+    wc.on("before-input-event", (e, input) => {
+      if (input.type === "keyDown" && input.key === "Escape") {
+        e.preventDefault();
+        this.closeExtensionPopup();
+      }
+    });
+    wc.on("did-finish-load", () => {
+      // La popup prend la taille de son contenu, dans les limites de Chrome (800 × 600).
+      void wc
+        .executeJavaScript("[document.documentElement.scrollWidth, document.documentElement.scrollHeight]")
+        .then(([w, h]: [number, number]) => this.extPopup === view && place(Math.min(800, Math.max(160, w)), Math.min(600, Math.max(80, h))))
+        .catch(() => undefined);
+      wc.focus();
+    });
+    wc.on("blur", () => setTimeout(() => this.extPopup === view && !wc.isFocused() && this.closeExtensionPopup(), 100));
+    void wc.loadURL(`chrome-extension://${id}/${ext.popup.replace(/^\//, "")}`);
+  }
+
+  closeExtensionPopup(): void {
+    const view = this.extPopup;
+    if (!view) return;
+    this.extPopup = null;
+    this.win.contentView.removeChildView(view);
+    view.webContents.close();
+  }
+
   // ——— import Arc ———
   async importArc(): Promise<void> {
     const path = arcSidebarPath();
@@ -775,6 +840,8 @@ export class Bowvane {
     try {
       const { state, report, faviconHints } = importArcSidebar(JSON.parse(readFileSync(path, "utf8")), Date.now(), ids);
       this.importArcFavicons(path, faviconHints);
+      importArcExtensions(path);
+      await loadAllExtensions();
       for (const id of [...this.views.keys()]) this.destroyView(id);
       this.splits.clear();
       this.commit({ ...state, history: this.state.history, archive: this.state.archive, rules: this.state.rules, boosts: this.state.boosts, settings: this.state.settings });
@@ -975,6 +1042,12 @@ export class Bowvane {
         return d ? shell.showItemInFolder(d.path) : undefined;
       }
       case "importArc": return void this.importArc();
+      case "openExtension": return this.openExtensionPopup(c.id, c.x, c.y);
+      case "pinExtension": {
+        const ext = extensionsFor(this.space().profile).find((e) => e.id === c.id);
+        if (ext) pinExtension(this.space().profile, ext.folder, c.pinned);
+        return this.push();
+      }
       case "littleCommand": return this.littleFor(sender)?.command(c.command);
       case "littleNavigate": return this.littleFor(sender)?.navigate(c.input);
       case "find": return this.findInPage(c.text, c.forward);

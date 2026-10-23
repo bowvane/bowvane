@@ -71,6 +71,21 @@ body.resizing::before, body.resizing .empty { display: none; }
 
 .urlbar { height: 36px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 12px; margin-bottom: 10px; border-radius: var(--radius); background: var(--tile); color: var(--muted); font-size: 13px; text-align: left; overflow: hidden; transition: background 0.12s; }
 .urlbar:hover { background: var(--tile-hover); }
+/* Extensions, comme Arc : les épinglées dans la barre du haut, les autres derrière le puzzle, visible au survol. */
+.topbar .ext img { display: block; border-radius: 3px; }
+.topbar .puzzle { opacity: 0; transition: opacity 0.12s; }
+.topbar:hover .puzzle, .topbar .puzzle.on { opacity: 1; }
+.ext-letter { width: 16px; height: 16px; display: grid; place-items: center; border-radius: 4px; background: var(--tile); font-size: 10px; font-weight: 600; }
+.ext-menu-backdrop { position: fixed; inset: 0; z-index: 20; }
+.ext-menu { position: absolute; top: 44px; left: 8px; right: 8px; z-index: 21; max-height: 60vh; overflow-y: auto; padding: 6px; border-radius: 10px; background: var(--surface); color: var(--surface-fg); box-shadow: 0 0 0 0.5px var(--surface-line), 0 8px 24px rgb(0 0 0 / 0.18); }
+.ext-menu-title { padding: 4px 8px 6px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.ext-menu-row { display: flex; align-items: center; gap: 2px; border-radius: 7px; }
+.ext-menu-row:hover { background: var(--control-hover); }
+.ext-menu-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 6px 8px; text-align: left; }
+.ext-menu-open img { display: block; border-radius: 3px; }
+.ext-menu-open .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ext-pin { opacity: 0.35; }
+.ext-menu-row:hover .ext-pin, .ext-pin.on { opacity: 1; }
 .url-host { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .url-placeholder { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
 

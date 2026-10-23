@@ -4,6 +4,8 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { ChromeCommand } from "../shared/ipc";
 import { Bowvane } from "./browser";
+import { hasImportedExtensions, importArcExtensions, loadAllExtensions } from "./extensions";
+import { arcSidebarPath } from "./persist";
 
 if (process.env.BOWVANE_USER_DATA) app.setPath("userData", process.env.BOWVANE_USER_DATA);
 app.setName("Bowvane");
@@ -150,7 +152,11 @@ function buildMenu(c: Bowvane): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Les extensions se chargent avant la création des onglets, sinon leurs scripts manquent les premières pages.
+  const arc = arcSidebarPath();
+  if (arc && !hasImportedExtensions()) importArcExtensions(arc);
+  await loadAllExtensions();
   bowvane = new Bowvane(rendererUrl);
   const c = bowvane;
   buildMenu(c);
