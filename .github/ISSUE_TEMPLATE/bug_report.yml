@@ -10,7 +10,7 @@ body:
       required: true
   - type: input
     attributes:
-      label: Courbe version
+      label: Bowvane version
       placeholder: "0.1.0"
     validations:
       required: true

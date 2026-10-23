@@ -1,4 +1,4 @@
-# Contributing to Courbe
+# Contributing to Bowvane
 
 Thanks for helping keep Arc's workflow alive. Every kind of contribution counts: code, design, bug reports, testing your own Arc import, docs, translations.
 
@@ -11,7 +11,7 @@ Thanks for helping keep Arc's workflow alive. Every kind of contribution counts:
 
 ## Setup
 
-Requirements: Node 22+, npm. Courbe builds on macOS and Linux (Linux is used for CI and tests).
+Requirements: Node 22+, npm. Bowvane builds on macOS and Linux (Linux is used for CI and tests).
 
 ```bash
 npm ci
@@ -23,8 +23,8 @@ npm run dist:mac    # package the macOS app
 
 Useful environment variables:
 
-- `COURBE_USER_DATA` — use a throwaway profile directory.
-- `COURBE_ARC_SIDEBAR` — import a specific Arc sidebar file.
+- `BOWVANE_USER_DATA` — use a throwaway profile directory.
+- `BOWVANE_ARC_SIDEBAR` — import a specific Arc sidebar file.
 
 ## Where things live
 
