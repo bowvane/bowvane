@@ -71,9 +71,10 @@ body.resizing::before, body.resizing .empty { display: none; }
 
 .urlbar { height: 36px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 12px; margin-bottom: 10px; border-radius: var(--radius); background: var(--tile); color: var(--muted); font-size: 13px; text-align: left; overflow: hidden; transition: background 0.12s; }
 .urlbar:hover { background: var(--tile-hover); }
-/* Extensions, comme Arc : les épinglées dans la barre du haut, les autres derrière le puzzle, visible au survol. */
+/* Extensions, comme Arc : les épinglées dans la barre du haut, les autres derrière le puzzle.
+   Arc ne montre le puzzle qu’au survol ; ici il reste visible, discret, pour qu’on le trouve. */
 .topbar .ext img { display: block; border-radius: 3px; }
-.topbar .puzzle { opacity: 0; transition: opacity 0.12s; }
+.topbar .puzzle { opacity: 0.55; transition: opacity 0.12s; }
 .topbar:hover .puzzle, .topbar .puzzle.on { opacity: 1; }
 .ext-letter { width: 16px; height: 16px; display: grid; place-items: center; border-radius: 4px; background: var(--tile); font-size: 10px; font-weight: 600; }
 .ext-menu-backdrop { position: fixed; inset: 0; z-index: 20; }
