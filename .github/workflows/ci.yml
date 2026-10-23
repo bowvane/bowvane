@@ -8,6 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Sans limite, une étape bloquée tourne jusqu’aux 6 h par défaut de GitHub.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,5 +19,6 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
-      - run: npx playwright install-deps
+      # Electron n’a besoin que des bibliothèques système de Chromium.
+      - run: npx playwright install-deps chromium
       - run: xvfb-run -a npx playwright test
