@@ -1,0 +1,16 @@
+name: Feature request
+description: Something Arc did (or never did) that Courbe should do
+labels: [enhancement]
+body:
+  - type: textarea
+    attributes:
+      label: The problem
+      description: Describe the situation you're in, not only the solution.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: How Arc handled it (if it did)
+  - type: textarea
+    attributes:
+      label: Proposed solution

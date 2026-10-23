@@ -1,0 +1,14 @@
+name: Arc import report
+description: Tell us how importing your Arc sidebar went — success reports are useful too
+labels: [arc-import]
+body:
+  - type: dropdown
+    attributes:
+      label: Result
+      options: [Everything came through, Some things were missing, Import failed]
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What was missing or wrong?
+      description: Counts and item types only (e.g. "2 of my 9 Spaces lost their color", "Easels skipped"). No URLs, no file attachments.
