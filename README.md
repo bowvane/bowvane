@@ -62,6 +62,7 @@ Bowvane makes a narrow promise: **keep Arc's workflow alive, in the open, so it 
 | **Boosts** | Per-site CSS and JavaScript. |
 | **Zap** | Click any element to hide it for good on that site. |
 | **Ad and tracker blocking** | Built in, using Ghostery's engine and filter lists. No extension needed. |
+| **Site controls** | The sliders button in the address bar: copy the link, Boost, capture, Zap, extensions, per-site settings and the connection's security, in one menu. |
 | **Little things** | Copy the URL (`⇧⌘C`) or a Markdown link (`⌥⇧⌘C`), capture the page (`⇧⌘2`), find in page (`⌘F`), reopen a closed tab (`⇧⌘T`), automatic Picture-in-Picture, per-tab mute, private windows. |
 
 ## Bringing your Arc with you
@@ -83,7 +84,7 @@ Nothing is uploaded and Arc's files are only read, never modified.
 
 ## Chrome extensions
 
-Extensions sit where Arc puts them: the **puzzle button** in the sidebar's top bar lists them all, and a pin keeps an extension's icon in the bar. Clicking an icon opens its popup.
+Extensions sit where Arc puts them: in the **site controls** menu, opened from the sliders button at the end of the address bar, next to the page actions and the site's settings. Click an extension to open its popup; right-click it to pin its icon to the sidebar's top bar.
 
 Bowvane runs on Electron, which implements only part of Chrome's extension APIs. Here is how the extensions its author uses behave today, tested on a real Mac:
 
