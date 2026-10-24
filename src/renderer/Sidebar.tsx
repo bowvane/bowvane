@@ -2,7 +2,7 @@ import { useRef, useState, type DragEvent, type PointerEvent, type ReactNode } f
 import { displayTitle, type Item, type TabItem, type Zone } from "../core/model";
 import type { Snapshot } from "../shared/ipc";
 import { Favicon } from "./Favicon";
-import { FolderIcon, Icon } from "./Icon";
+import { ExtIcon, FolderIcon, Icon } from "./Icon";
 import { faviconFor, send, useUi } from "./store";
 import { useSpaceTheme } from "./theme";
 
@@ -153,19 +153,13 @@ function ResizeHandle({ width }: { width: number }) {
   );
 }
 
-function ExtIcon({ icon, name }: { icon: string | null; name: string }) {
-  return icon ? <img src={icon} alt="" width={16} height={16} /> : <span className="ext-letter">{name.slice(0, 1)}</span>;
-}
-
 export function Sidebar() {
   const snap = useUi((s) => s.snap);
   const wheel = useRef({ x: 0, last: 0, blockedUntil: 0 });
   const [hoverSpace, setHoverSpace] = useState<string | null>(null);
-  const [extMenu, setExtMenu] = useState(false);
   // La popup s’ouvre sous l’élément cliqué, à droite de la sidebar si la place manque dedans.
   const openExt = (id: string, el: HTMLElement) => {
     const r = el.getBoundingClientRect();
-    setExtMenu(false);
     send({ type: "openExtension", id, x: Math.round(r.left), y: Math.round(r.bottom + 6) });
   };
   const space = snap ? (snap.state.spaces.find((s) => s.id === snap.state.activeSpaceId) ?? snap.state.spaces[0]) : undefined;
@@ -217,53 +211,43 @@ export function Sidebar() {
                 <ExtIcon icon={x.icon} name={x.name} />
               </button>
             ))}
-            {snap.extensions.length > 0 && (
-              <button className={`icon puzzle ${extMenu ? "on" : ""}`} title="Extensions" data-testid="ext-menu-button" onClick={() => setExtMenu((v) => !v)}>
-                <Icon name="puzzle" />
-              </button>
-            )}
             <button className="icon" disabled={!rt?.canGoBack} title="Précédent (⌘[)" onClick={() => send({ type: "back" })}><Icon name="back" /></button>
             <button className="icon" disabled={!rt?.canGoForward} title="Suivant (⌘])" onClick={() => send({ type: "forward" })}><Icon name="forward" /></button>
             <button className="icon" disabled={!active} title="Recharger (⌘R)" onClick={() => send({ type: "reload" })}><Icon name="reload" /></button>
           </div>
 
-          <button
-            className="urlbar"
-            data-testid="urlbar"
-            title={active?.url}
-            onClick={() => send({ type: "openOverlay", view: { kind: "command", initial: active?.url ?? "", replaceCurrent: !!active } })}
-          >
-            {host ? (
-              <span className="url-host">{host}</span>
-            ) : (
-              <span className="url-placeholder"><Icon name="search" size={13} /> Rechercher ou saisir une URL</span>
+          <div className="urlbar">
+            <button
+              className="url-main"
+              data-testid="urlbar"
+              title={active?.url}
+              onClick={() => send({ type: "openOverlay", view: { kind: "command", initial: active?.url ?? "", replaceCurrent: !!active } })}
+            >
+              {host ? (
+                <span className="url-host">{host}</span>
+              ) : (
+                <span className="url-placeholder"><Icon name="search" size={13} /> Rechercher ou saisir une URL</span>
+              )}
+            </button>
+            {active && (
+              <button className="icon url-tool" title="Copier l’URL (⇧⌘C)" onClick={() => send({ type: "action", action: "copyUrl" })}>
+                <Icon name="link" size={14} />
+              </button>
             )}
-          </button>
+            {/* Comme Arc : les extensions et les réglages du site sont derrière ce bouton. */}
+            <button
+              className="icon url-tool site"
+              title="Contrôles du site et extensions"
+              data-testid="site-controls-button"
+              onClick={(e) => {
+                const r = e.currentTarget.getBoundingClientRect();
+                send({ type: "openOverlay", view: { kind: "site", x: Math.round(r.left + r.width / 2), y: Math.round(r.bottom + 8) } });
+              }}
+            >
+              <Icon name="sliders" size={14} />
+            </button>
+          </div>
 
-          {extMenu && (
-            <>
-              <div className="ext-menu-backdrop" onClick={() => setExtMenu(false)} />
-              <div className="ext-menu" data-testid="ext-menu" onKeyDown={(e) => e.key === "Escape" && setExtMenu(false)}>
-                <div className="ext-menu-title">Extensions</div>
-                {snap.extensions.map((x) => (
-                  <div key={x.id} className="ext-menu-row">
-                    <button className="ext-menu-open" data-testid={`ext-open-${x.id}`} onClick={(e) => openExt(x.id, e.currentTarget)}>
-                      <ExtIcon icon={x.icon} name={x.name} />
-                      <span className="label">{x.name}</span>
-                    </button>
-                    <button
-                      className={`icon ext-pin ${x.pinned ? "on" : ""}`}
-                      title={x.pinned ? "Retirer de la barre" : "Épingler dans la barre"}
-                      data-testid={`ext-pin-${x.id}`}
-                      onClick={() => send({ type: "pinExtension", id: x.id, pinned: !x.pinned })}
-                    >
-                      <Icon name="pin" size={13} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
 
           <div
             className="favorites"

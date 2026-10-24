@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CommandResult } from "../core/commandBar";
-import type { Appearance, Boost, Rule, Settings, Space } from "../core/model";
+import type { CommandAction, CommandResult } from "../core/commandBar";
+import type { Appearance, Boost, Rule, Settings, Space, TabItem } from "../core/model";
 import type { OverlayView, PanelData, Snapshot } from "../shared/ipc";
 import { Favicon } from "./Favicon";
-import { Icon } from "./Icon";
+import { ExtIcon, Icon } from "./Icon";
 import { faviconFor, send, useUi } from "./store";
 import { useSpaceTheme } from "./theme";
 
@@ -347,6 +347,96 @@ function PeekChrome({ snap, url }: { snap: Snapshot; url: string }) {
   );
 }
 
+const SITE_WIDTH = 252;
+
+/** Menu de contrôle du site, comme celui d’Arc : actions, extensions, réglages du site, sécurité. */
+function SiteControls({ snap, view }: { snap: Snapshot; view: Extract<OverlayView, { kind: "site" }> }) {
+  const s = snap.state;
+  const tab = s.items.find((i): i is TabItem => i.kind === "tab" && i.id === s.activeTabBySpace[s.activeSpaceId]);
+  let host = "";
+  try {
+    host = tab ? new URL(tab.url).hostname.replace(/^www\./, "") : "";
+  } catch {
+    host = "";
+  }
+  const boost = host ? s.boosts.find((b) => b.host === host) : undefined;
+  const left = Math.max(8, Math.min(view.x - SITE_WIDTH / 2, window.innerWidth - SITE_WIDTH - 8));
+  const run = (action: CommandAction) => {
+    close();
+    send({ type: "action", action });
+  };
+  return (
+    <div className="site-controls" data-testid="site-controls" style={{ left, top: view.y, width: SITE_WIDTH }} onClick={(e) => e.stopPropagation()}>
+      {tab && (
+        <div className="site-actions">
+          <button title="Copier le lien (⇧⌘C)" onClick={() => run("copyUrl")}><Icon name="link" /></button>
+          <button title="Booster ce site" onClick={() => send({ type: "action", action: "boost" })}><Icon name="brush" /></button>
+          <button title="Capturer la page (⇧⌘2)" onClick={() => run("capture")}><Icon name="camera" /></button>
+          <button title="Zap : masquer un élément" onClick={() => run("zap")}><Icon name="bolt" /></button>
+        </div>
+      )}
+      {snap.extensions.length > 0 && (
+        <>
+          <div className="site-title">Extensions</div>
+          <div className="site-ext-grid">
+            {snap.extensions.map((x) => (
+              <button
+                key={x.id}
+                className={`site-ext ${x.pinned ? "pinned" : ""}`}
+                title={`${x.name}\nClic droit : ${x.pinned ? "retirer de" : "épingler dans"} la barre du haut`}
+                data-testid={`ext-tile-${x.id}`}
+                onClick={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  send({ type: "openExtension", id: x.id, x: Math.round(r.left), y: Math.round(r.bottom + 6) });
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  send({ type: "pinExtension", id: x.id, pinned: !x.pinned });
+                }}
+              >
+                <ExtIcon icon={x.icon} name={x.name} size={18} />
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {boost && (
+        <>
+          <div className="site-title">Réglages du site</div>
+          <label className="site-setting">
+            <span className="site-setting-icon"><Icon name="brush" size={14} /></span>
+            <span className="grow">
+              <span className="site-setting-name">Boost</span>
+              <span className="site-setting-state">{boost.enabled ? "Actif" : "Désactivé"}</span>
+            </span>
+            <input type="checkbox" checked={boost.enabled} onChange={() => send({ type: "saveBoost", boost: { ...boost, enabled: !boost.enabled } })} />
+          </label>
+          {boost.zapped.length > 0 && (
+            <div className="site-setting">
+              <span className="site-setting-icon"><Icon name="bolt" size={14} /></span>
+              <span className="grow">
+                <span className="site-setting-name">Éléments masqués</span>
+                <span className="site-setting-state">{boost.zapped.length}</span>
+              </span>
+              <button className="site-link" onClick={() => send({ type: "saveBoost", boost: { ...boost, zapped: [] } })}>Réafficher</button>
+            </div>
+          )}
+        </>
+      )}
+      <div className="site-footer">
+        {tab && (
+          <span className={`site-security ${tab.url.startsWith("https:") ? "" : "warn"}`}>
+            <Icon name="lock" size={13} />
+            <span data-testid="site-security">{tab.url.startsWith("https:") ? "Sécurisé" : "Non sécurisé"}</span>
+          </span>
+        )}
+        <span className="grow" />
+        <button className="icon" title="Réglages" onClick={() => send({ type: "openOverlay", view: { kind: "settings" } })}><Icon name="more" /></button>
+      </div>
+    </div>
+  );
+}
+
 export function Overlay() {
   const snap = useUi((s) => s.snap);
   const view = snap?.overlay ?? { kind: "none" as const };
@@ -363,6 +453,7 @@ export function Overlay() {
       case "space": return <SpaceEditor key={snap.overlaySeq} snap={snap} spaceId={view.spaceId} />;
       case "boost": return data?.boost && <BoostEditor key={data.boost.id + data.boost.zapped.length} data={data} />;
       case "peek": return <PeekChrome snap={snap} url={view.url} />;
+      case "site": return <SiteControls snap={snap} view={view} />;
       default: return null;
     }
   }, [snap, view, data]);

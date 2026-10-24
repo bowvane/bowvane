@@ -1042,7 +1042,9 @@ export class Bowvane {
         return d ? shell.showItemInFolder(d.path) : undefined;
       }
       case "importArc": return void this.importArc();
-      case "openExtension": return this.openExtensionPopup(c.id, c.x, c.y);
+      case "openExtension":
+        if (this.overlayView.kind === "site") this.closeOverlay();
+        return this.openExtensionPopup(c.id, c.x, c.y);
       case "pinExtension": {
         const ext = extensionsFor(this.space().profile).find((e) => e.id === c.id);
         if (ext) pinExtension(this.space().profile, ext.folder, c.pinned);

@@ -69,24 +69,16 @@ body.resizing::before, body.resizing .empty { display: none; }
 .topbar { height: 46px; flex: none; display: flex; align-items: center; gap: 6px; padding-left: 70px; -webkit-app-region: drag; }
 .topbar button { -webkit-app-region: no-drag; }
 
-.urlbar { height: 36px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 12px; margin-bottom: 10px; border-radius: var(--radius); background: var(--tile); color: var(--muted); font-size: 13px; text-align: left; overflow: hidden; transition: background 0.12s; }
+.urlbar { height: 36px; flex: none; display: flex; align-items: center; gap: 2px; padding: 0 4px 0 12px; margin-bottom: 10px; border-radius: var(--radius); background: var(--tile); color: var(--muted); font-size: 13px; text-align: left; overflow: hidden; transition: background 0.12s; }
 .urlbar:hover { background: var(--tile-hover); }
-/* Extensions, comme Arc : les épinglées dans la barre du haut, les autres derrière le puzzle.
-   Arc ne montre le puzzle qu’au survol ; ici il reste visible, discret, pour qu’on le trouve. */
+.url-main { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: 6px; color: inherit; text-align: left; }
+.urlbar .url-tool { width: 26px; height: 26px; opacity: 0; transition: opacity 0.12s; }
+/* Le bouton des contrôles reste visible, discret, pour qu’on trouve les extensions sans survoler. */
+.urlbar .url-tool.site { opacity: 0.55; }
+.urlbar:hover .url-tool { opacity: 1; }
+/* Extensions épinglées dans la barre du haut ; les autres sont dans le menu de contrôle du site, comme Arc. */
 .topbar .ext img { display: block; border-radius: 3px; }
-.topbar .puzzle { opacity: 0.55; transition: opacity 0.12s; }
-.topbar:hover .puzzle, .topbar .puzzle.on { opacity: 1; }
 .ext-letter { width: 16px; height: 16px; display: grid; place-items: center; border-radius: 4px; background: var(--tile); font-size: 10px; font-weight: 600; }
-.ext-menu-backdrop { position: fixed; inset: 0; z-index: 20; }
-.ext-menu { position: absolute; top: 44px; left: 8px; right: 8px; z-index: 21; max-height: 60vh; overflow-y: auto; padding: 6px; border-radius: 10px; background: var(--surface); color: var(--surface-fg); box-shadow: 0 0 0 0.5px var(--surface-line), 0 8px 24px rgb(0 0 0 / 0.18); }
-.ext-menu-title { padding: 4px 8px 6px; font-size: 11px; font-weight: 600; color: var(--muted); }
-.ext-menu-row { display: flex; align-items: center; gap: 2px; border-radius: 7px; }
-.ext-menu-row:hover { background: var(--control-hover); }
-.ext-menu-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 6px 8px; text-align: left; }
-.ext-menu-open img { display: block; border-radius: 3px; }
-.ext-menu-open .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ext-pin { opacity: 0.35; }
-.ext-menu-row:hover .ext-pin, .ext-pin.on { opacity: 1; }
 .url-host { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .url-placeholder { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
 
@@ -231,3 +223,24 @@ body[data-view="little"] { background: var(--bg); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before { animation: none !important; transition: none !important; }
 }
+
+/* Menu de contrôle du site (overlay), mesuré sur Arc : actions, grille d’extensions, réglages, sécurité. */
+.backdrop.site { background: transparent; padding: 0; display: block; animation: none; }
+.site-controls { position: absolute; padding: 8px; border-radius: 14px; background: var(--surface); color: var(--surface-fg); box-shadow: 0 18px 50px rgb(0 0 0 / 0.32), 0 0 0 0.5px var(--surface-line); animation: rise 0.14s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+.site-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 4px; }
+.site-actions button { height: 34px; display: grid; place-items: center; border-radius: 9px; background: var(--control-hover); color: inherit; }
+.site-actions button:hover, .site-ext:hover { background: var(--surface-line); }
+.site-title { padding: 10px 4px 6px; font-size: 12px; font-weight: 600; opacity: 0.6; }
+.site-ext-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.site-ext { position: relative; height: 38px; display: grid; place-items: center; border-radius: 9px; background: var(--control-hover); }
+.site-ext img { display: block; border-radius: 4px; }
+.site-ext.pinned::after { content: ""; position: absolute; top: 5px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.site-setting { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 9px; }
+.site-setting-icon { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--control-hover); }
+.site-setting .grow { display: flex; flex-direction: column; min-width: 0; }
+.site-setting-name { font-size: 13px; font-weight: 600; }
+.site-setting-state { font-size: 12px; opacity: 0.6; }
+.site-link { font-size: 12px; color: var(--accent); }
+.site-footer { display: flex; align-items: center; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--surface-line); }
+.site-security { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 8px; background: var(--control-hover); font-size: 12px; font-weight: 600; }
+.site-security.warn { color: #d0573f; }

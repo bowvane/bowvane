@@ -12,7 +12,9 @@ export type OverlayView =
   | { kind: "boost"; host: string }
   | { kind: "peek"; url: string }
   | { kind: "space"; spaceId: string | null }
-  | { kind: "find" };
+  | { kind: "find" }
+  /** Menu de contrôle du site, ouvert depuis la barre d’adresse ; x, y : point d’ancrage dans la fenêtre. */
+  | { kind: "site"; x: number; y: number };
 
 export interface TabRuntime {
   loaded: boolean;

@@ -218,22 +218,15 @@ test("parcours principal : import Arc, Command Bar, épingler, Spaces, Split, ar
   await app.close();
 });
 
-test("extensions d’Arc : import, menu puzzle, épinglage, script de contenu, popup", async () => {
+test("extensions d’Arc : import, menu de contrôle du site, épinglage, script de contenu, popup", async () => {
   const app = await launch("profile-ext");
   const sidebar = await view(app, "sidebar");
 
-  // Comme dans Arc : rien d’épinglé, donc aucune icône dans la barre ; tout est derrière le puzzle.
+  // Comme dans Arc : rien d’épinglé, donc aucune icône dans la barre du haut.
   // Sans `key` dans le manifeste, Electron dérive l’identifiant du chemin : on cible donc par rôle, pas par identifiant.
   const pinned = sidebar.locator(".topbar .ext");
   await expect(pinned).toHaveCount(0);
-  await sidebar.getByTestId("ext-menu-button").click();
   // Seule l’extension activée dans Arc est reprise, sans son dossier `_metadata` que Chrome réserve.
-  const rows = sidebar.locator("[data-testid^=ext-open-]");
-  await expect(rows).toHaveCount(1);
-  await expect(rows.first()).toContainText("Test Extension");
-  // Un clic hors du menu le referme.
-  await sidebar.locator(".ext-menu-backdrop").click();
-  await expect(sidebar.getByTestId("ext-menu")).toHaveCount(0);
   const copied = join(dir, "profile-ext", "Extensions", "default", EXT_ID);
   expect(existsSync(join(copied, "manifest.json"))).toBe(true);
   expect(existsSync(join(copied, "_metadata"))).toBe(false);
@@ -243,14 +236,33 @@ test("extensions d’Arc : import, menu puzzle, épinglage, script de contenu, p
   const tab = await page(app, `${base}/alpha`);
   await expect(tab.locator("html")).toHaveAttribute("data-bowvane-ext", "1");
 
-  // Épinglée depuis le menu, elle rejoint la barre du haut et le reste après redémarrage (pinned.json).
-  await sidebar.getByTestId("ext-menu-button").click();
-  await sidebar.locator("[data-testid^=ext-pin-]").click();
+  // Comme Arc, les extensions sont dans le menu de contrôle du site, ouvert depuis la barre d’adresse.
+  await sidebar.getByTestId("site-controls-button").click();
+  const overlay = await view(app, "overlay");
+  const controls = overlay.getByTestId("site-controls");
+  await expect(controls).toBeVisible();
+  const tiles = controls.locator("[data-testid^=ext-tile-]");
+  await expect(tiles).toHaveCount(1);
+  await expect(tiles.first()).toHaveAttribute("title", /Test Extension/);
+  // La page de test est servie en http : le pied du menu le dit.
+  await expect(controls.getByTestId("site-security")).toHaveText("Non sécurisé");
+
+  // Clic droit sur la tuile : l’extension rejoint la barre du haut, et le reste après redémarrage (pinned.json).
+  await tiles.first().click({ button: "right" });
   await expect(pinned).toHaveCount(1);
   await expect(pinned).toHaveAttribute("title", "Test Extension");
   expect(JSON.parse(readFileSync(join(dir, "profile-ext", "Extensions", "default", "pinned.json"), "utf8"))).toEqual([EXT_ID]);
-  await sidebar.locator(".ext-menu-backdrop").click();
-  await expect(sidebar.getByTestId("ext-menu")).toHaveCount(0);
+
+  // Un clic sur la tuile ferme le menu et ouvre la popup.
+  await tiles.first().click();
+  await expect(controls).toHaveCount(0);
+  const first = await page(app, "chrome-extension://");
+  await expect(first.locator("#hello")).toHaveText("Bonjour");
+  await app.evaluate(({ webContents }) => {
+    const wc = webContents.getAllWebContents().find((w) => w.getURL().startsWith("chrome-extension://"));
+    wc?.sendInputEvent({ type: "keyDown", keyCode: "Escape" });
+  });
+  await expect.poll(() => app.windows().some((w) => w.url().startsWith("chrome-extension://"))).toBe(false);
 
   // L’icône épinglée ouvre la popup de l’extension ; Échap la ferme.
   await pinned.click();

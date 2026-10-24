@@ -19,8 +19,10 @@ const PATHS = {
   lock: <><rect x="3.5" y="7" width="9" height="6.5" rx="1.6" /><path d="M5.5 7V5.2a2.5 2.5 0 0 1 5 0V7" /></>,
   more: <><circle cx="3.5" cy="8" r="0.6" /><circle cx="8" cy="8" r="0.6" /><circle cx="12.5" cy="8" r="0.6" /></>,
   folderAdd: <><path d="M2 5.2V4a1.2 1.2 0 0 1 1.2-1.2h3l1.4 1.6h5.2A1.2 1.2 0 0 1 14 5.6v6.2a1.2 1.2 0 0 1-1.2 1.2H3.2A1.2 1.2 0 0 1 2 11.8z" /><path d="M8 7v4M6 9h4" /></>,
-  puzzle: <path d="M6.2 2.6a1.4 1.4 0 0 1 2.8 0v.9h2.7a.8.8 0 0 1 .8.8v2.4h-.8a1.4 1.4 0 0 0 0 2.8h.8v2.4a.8.8 0 0 1-.8.8H9.3v-.8a1.4 1.4 0 0 0-2.8 0v.8H4.1a.8.8 0 0 1-.8-.8V9.3h.8a1.4 1.4 0 0 0 0-2.8h-.8V4.3a.8.8 0 0 1 .8-.8h2.1z" />,
-  pin: <><path d="M6 2.5h4l-.6 4 2.1 2.2v.8H4.5v-.8l2.1-2.2z" /><path d="M8 9.5v4" /></>,
+  link: <><path d="M6.8 9.2a2.6 2.6 0 0 0 3.7 0l2.2-2.2a2.6 2.6 0 0 0-3.7-3.7l-.9.9" /><path d="M9.2 6.8a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9" /></>,
+  sliders: <><path d="M3 4.5h6M12 4.5h1M3 11.5h1M7 11.5h6" /><circle cx="10.5" cy="4.5" r="1.5" /><circle cx="5.5" cy="11.5" r="1.5" /></>,
+  camera: <><path d="M2.5 5.5a1.2 1.2 0 0 1 1.2-1.2h1.6l1.1-1.6h3.2l1.1 1.6h1.6a1.2 1.2 0 0 1 1.2 1.2v6a1.2 1.2 0 0 1-1.2 1.2H3.7a1.2 1.2 0 0 1-1.2-1.2z" /><circle cx="8" cy="8.4" r="2.2" /></>,
+  brush: <><path d="M13.2 2.8 8 8" /><path d="M7.6 8.4c-1.6-.3-3.1.9-3.1 2.6 0 1-.6 1.7-1.7 2.2 2.6.6 5.6-.4 5.9-3z" /></>,
   expand: <path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9" />,
 } as const;
 
@@ -48,4 +50,9 @@ export function FolderIcon({ open }: { open: boolean }) {
       )}
     </svg>
   );
+}
+
+/** Icône d’extension, ou sa première lettre quand le manifeste n’en fournit pas. */
+export function ExtIcon({ icon, name, size = 16 }: { icon: string | null; name: string; size?: number }) {
+  return icon ? <img src={icon} alt="" width={size} height={size} /> : <span className="ext-letter">{name.slice(0, 1)}</span>;
 }
